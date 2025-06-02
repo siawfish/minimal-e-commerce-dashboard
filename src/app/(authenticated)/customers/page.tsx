@@ -256,7 +256,7 @@ export default function Customers() {
                       </TableCell>
                       <TableCell>
                         <div className="text-center">
-                          <p className="font-medium text-zinc-900">${customer.totalSpent.toLocaleString()}</p>
+                          <p className="font-medium text-zinc-900">₵{customer.totalSpent.toLocaleString()}</p>
                           <p className="text-xs text-zinc-500">lifetime value</p>
                         </div>
                       </TableCell>

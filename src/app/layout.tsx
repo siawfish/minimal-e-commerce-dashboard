@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Suspense } from "react";
+import { AuthProvider } from "@/lib/auth-context";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -21,9 +22,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} font-sans antialiased bg-zinc-50`}>
-        <Suspense fallback={<div>Loading...</div>}>
-          {children}
-        </Suspense>
+        <AuthProvider>
+          <Suspense fallback={<div>Loading...</div>}>
+            {children}
+          </Suspense>
+        </AuthProvider>
       </body>
     </html>
   );

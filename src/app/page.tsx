@@ -1,19 +1,46 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/auth-context'
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const { signInWithGoogle, user, loading } = useAuth()
 
-  const handleGoogleLogin = () => {
-    setIsLoading(true)
-    // This would handle Google OAuth in a real implementation
-    setTimeout(() => {
-      setIsLoading(false)
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!loading && user) {
       router.push('/overview')
-    }, 1000)
+    }
+  }, [user, loading, router])
+
+  const handleGoogleLogin = async () => {
+    try {
+      setIsLoading(true)
+      await signInWithGoogle()
+      router.push('/overview')
+    } catch (error) {
+      console.error('Login failed:', error)
+      // You could add error handling UI here
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b border-black"></div>
+      </div>
+    )
+  }
+
+  // Don't show login form if user is authenticated
+  if (user) {
+    return null
   }
 
   return (

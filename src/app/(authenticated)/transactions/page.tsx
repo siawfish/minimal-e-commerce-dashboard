@@ -157,7 +157,7 @@ const columns: ColumnDef<Transaction>[] = [
     cell: ({ row }) => (
       <div className="flex items-center justify-end gap-1">
         <DollarSign className="h-3 w-3 text-zinc-400" />
-        <span className="font-semibold">${row.original.total.toLocaleString()}</span>
+        <span className="font-semibold">₵{row.original.total.toLocaleString()}</span>
       </div>
     ),
   },
