@@ -28,6 +28,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Card,
+  CardContent,
+} from "@/components/ui/card"
 
 // Define the product table data type
 type ProductTableData = {
@@ -56,7 +60,6 @@ const productColumns: ColumnDef<ProductTableData>[] = [
           }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
-          className="hidden sm:flex"
         />
       </div>
     ),
@@ -66,7 +69,6 @@ const productColumns: ColumnDef<ProductTableData>[] = [
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
           aria-label="Select row"
-          className="hidden sm:flex"
         />
       </div>
     ),
@@ -85,12 +87,11 @@ const productColumns: ColumnDef<ProductTableData>[] = [
             <img
               src={thumbnail}
               alt={`${name} thumbnail`}
-              className="h-10 w-10 sm:h-12 sm:w-12 rounded-md object-cover border border-gray-200"
+              className="h-12 w-12 rounded-lg object-cover border border-gray-200"
             />
           ) : (
-            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-gray-100 border border-gray-200 flex items-center justify-center">
-              <span className="text-xs text-gray-400 hidden sm:block">No image</span>
-              <span className="text-xs text-gray-400 sm:hidden">-</span>
+            <div className="h-12 w-12 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center">
+              <span className="text-xs text-gray-400">No image</span>
             </div>
           )}
         </div>
@@ -102,21 +103,14 @@ const productColumns: ColumnDef<ProductTableData>[] = [
     accessorKey: "name",
     header: "Product",
     cell: ({ row }) => (
-      <div className="space-y-1">
-        <div className="font-medium text-sm sm:text-base">{row.getValue("name")}</div>
-        <div className="sm:hidden">
-          <Badge variant="outline" className="px-1 py-0 text-xs">
-            {row.getValue("category")}
-          </Badge>
-        </div>
-      </div>
+      <div className="font-medium">{row.getValue("name")}</div>
     ),
   },
   {
     accessorKey: "category",
     header: "Category",
     cell: ({ row }) => (
-      <Badge variant="outline" className="px-2 py-1 hidden sm:inline-flex">
+      <Badge variant="outline" className="px-2 py-1">
         {row.getValue("category")}
       </Badge>
     ),
@@ -129,10 +123,9 @@ const productColumns: ColumnDef<ProductTableData>[] = [
       return (
         <Badge
           variant={status === "Active" ? "default" : "secondary"}
-          className="px-1 sm:px-2 py-1 text-xs"
+          className="px-2 py-1"
         >
-          <span className="sm:hidden">{status === "Active" ? "✓" : "✕"}</span>
-          <span className="hidden sm:inline">{status}</span>
+          {status}
         </Badge>
       )
     },
@@ -141,7 +134,7 @@ const productColumns: ColumnDef<ProductTableData>[] = [
     accessorKey: "price",
     header: "Price",
     cell: ({ row }) => (
-      <div className="font-medium text-sm sm:text-base">{row.getValue("price")}</div>
+      <div className="font-medium">{row.getValue("price")}</div>
     ),
   },
   {
@@ -153,7 +146,7 @@ const productColumns: ColumnDef<ProductTableData>[] = [
         <div className="font-medium">
           <Badge 
             variant={quantity > 10 ? "default" : quantity > 0 ? "secondary" : "destructive"}
-            className="px-1 sm:px-2 py-1 text-xs"
+            className="px-2 py-1"
           >
             {quantity}
           </Badge>
@@ -165,21 +158,108 @@ const productColumns: ColumnDef<ProductTableData>[] = [
     accessorKey: "sizes",
     header: "Sizes",
     cell: ({ row }) => (
-      <div className="text-xs sm:text-sm text-muted-foreground hidden md:block max-w-[80px] truncate">
+      <div className="text-sm text-muted-foreground max-w-[100px] truncate">
         {row.getValue("sizes")}
       </div>
     ),
   },
-  {
-    accessorKey: "description",
-    header: "Description",
-    cell: ({ row }) => (
-      <div className="max-w-xs truncate text-xs sm:text-sm text-muted-foreground hidden lg:block">
-        {row.getValue("description")}
-      </div>
-    ),
-  },
 ]
+
+// Mobile Card Component for product display
+function ProductCard({ 
+  product, 
+  isSelected, 
+  onSelect, 
+  onClick 
+}: { 
+  product: ProductTableData
+  isSelected: boolean
+  onSelect: (checked: boolean) => void
+  onClick: () => void
+}) {
+  return (
+    <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
+      <CardContent className="p-4">
+        <div className="flex items-start space-x-4">
+          {/* Checkbox */}
+          <div className="pt-1" onClick={(e) => e.stopPropagation()}>
+            <Checkbox
+              checked={isSelected}
+              onCheckedChange={onSelect}
+              aria-label="Select product"
+            />
+          </div>
+          
+          {/* Product Image */}
+          <div className="flex-shrink-0">
+            {product.thumbnail ? (
+              <img
+                src={product.thumbnail}
+                alt={`${product.name} thumbnail`}
+                className="h-16 w-16 rounded-lg object-cover border border-gray-200"
+              />
+            ) : (
+              <div className="h-16 w-16 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center">
+                <span className="text-xs text-gray-400">No image</span>
+              </div>
+            )}
+          </div>
+          
+          {/* Product Details */}
+          <div className="flex-1 min-w-0 space-y-2">
+            <div className="flex items-start justify-between">
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold text-base leading-tight truncate">
+                  {product.name}
+                </h3>
+                <div className="flex items-center space-x-2 mt-1">
+                  <Badge variant="outline" className="text-xs">
+                    {product.category}
+                  </Badge>
+                  <Badge
+                    variant={product.status === "Active" ? "default" : "secondary"}
+                    className="text-xs"
+                  >
+                    {product.status}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+            
+            {/* Price and Quantity Row */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div>
+                  <span className="text-sm text-muted-foreground">Price</span>
+                  <div className="font-semibold text-lg">{product.price}</div>
+                </div>
+                <div>
+                  <span className="text-sm text-muted-foreground">Qty</span>
+                  <div className="mt-1">
+                    <Badge 
+                      variant={product.quantity > 10 ? "default" : product.quantity > 0 ? "secondary" : "destructive"}
+                      className="text-xs"
+                    >
+                      {product.quantity}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Sizes */}
+            {product.sizes && (
+              <div>
+                <span className="text-sm text-muted-foreground">Sizes: </span>
+                <span className="text-sm">{product.sizes}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
 
 // Custom ProductTable component
 function ProductTable({ data }: { data: ProductTableData[] }) {
@@ -210,76 +290,106 @@ function ProductTable({ data }: { data: ProductTableData[] }) {
     },
   })
 
-  const handleRowClick = (row: { original: ProductTableData }) => {
-    const productId = row.original.productId
+  const handleRowClick = (productId: string) => {
     router.push(`/product?id=${productId}`)
   }
 
+  const currentPageData = table.getRowModel().rows.map(row => row.original)
+
   return (
     <div className="space-y-4">
-      <div className="rounded-md border overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <TableHead key={header.id} className="text-xs sm:text-sm">
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                      </TableHead>
-                    )
-                  })}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleRowClick(row)}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell 
-                        key={cell.id}
-                        className="py-2 sm:py-4 px-2 sm:px-4"
-                        onClick={(e) => {
-                          // Prevent row click when clicking on checkbox or thumbnail
-                          if (cell.column.id === 'select' || cell.column.id === 'thumbnail') {
-                            e.stopPropagation()
-                          }
-                        }}
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
+      {/* Desktop Table View */}
+      <div className="hidden md:block">
+        <div className="rounded-md border overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => {
+                      return (
+                        <TableHead key={header.id}>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                        </TableHead>
+                      )
+                    })}
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={productColumns.length}
-                    className="h-24 text-center"
-                  >
-                    No results.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleRowClick(row.original.productId)}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell 
+                          key={cell.id}
+                          className="py-4"
+                          onClick={(e) => {
+                            // Prevent row click when clicking on checkbox
+                            if (cell.column.id === 'select') {
+                              e.stopPropagation()
+                            }
+                          }}
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={productColumns.length}
+                      className="h-24 text-center"
+                    >
+                      No results.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-3">
+        {currentPageData.length > 0 ? (
+          currentPageData.map((product) => {
+            const row = table.getRowModel().rows.find(r => r.original.id === product.id)
+            const isSelected = row?.getIsSelected() || false
+            
+            return (
+              <ProductCard
+                key={product.id}
+                product={product}
+                isSelected={isSelected}
+                onSelect={(checked) => row?.toggleSelected(checked)}
+                onClick={() => handleRowClick(product.productId)}
+              />
+            )
+          })
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">No products found.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Pagination */}
       <div className="flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0 sm:space-x-2 py-4">
         <div className="text-xs sm:text-sm text-muted-foreground order-2 sm:order-1">
           <span className="hidden sm:inline">
@@ -297,7 +407,6 @@ function ProductTable({ data }: { data: ProductTableData[] }) {
             size="sm"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className="text-xs sm:text-sm"
           >
             Previous
           </Button>
@@ -306,7 +415,6 @@ function ProductTable({ data }: { data: ProductTableData[] }) {
             size="sm"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className="text-xs sm:text-sm"
           >
             Next
           </Button>

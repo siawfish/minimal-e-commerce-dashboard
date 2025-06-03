@@ -13,10 +13,10 @@ export default function RootLayout({
     <AuthGuard>
       <SidebarProvider>
         <AppSidebar variant="inset" />
-        <SidebarInset>
+        <SidebarInset className="overflow-hidden">
           <SiteHeader />
-          <div className="flex flex-1 flex-col px-4 lg:px-6 pt-4 lg:pt-6">
-            <div className="@container/main flex flex-1 flex-col gap-2">
+          <div className="flex flex-1 flex-col min-h-0">
+            <div className="flex flex-1 flex-col px-4 lg:px-6 pt-4 lg:pt-6 overflow-auto">
               {children}
             </div>
           </div>

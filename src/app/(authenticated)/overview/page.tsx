@@ -1,16 +1,20 @@
-import { ChartAreaInteractive } from "@/components/chart-area-interactive"
-import { DataTable } from "@/components/data-table"
-import { SectionCards } from "@/components/section-cards"
-
-import data from "./data.json"
+import { Suspense } from "react"
+import { OverviewDashboard } from "@/components/overview-dashboard"
+import { OverviewSkeleton } from "@/components/overview-skeleton"
 
 export default function Page() {
   return (
-    
-    <div className="flex flex-col gap-4">
-      <SectionCards />
-      <ChartAreaInteractive />
-      <DataTable data={data} />
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard Overview</h1>
+        <p className="text-muted-foreground">
+          Get insights into your e-commerce performance and key metrics.
+        </p>
+      </div>
+      
+      <Suspense fallback={<OverviewSkeleton />}>
+        <OverviewDashboard />
+      </Suspense>
     </div>
   )
 }

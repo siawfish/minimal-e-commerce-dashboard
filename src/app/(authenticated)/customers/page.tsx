@@ -20,72 +20,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Search, Filter, MoreVertical, ArrowUpDown, Eye, Edit, Trash } from "lucide-react"
-
-interface Customer {
-  id: string
-  name: string
-  email: string
-  orders: number
-  totalSpent: number
-  joinedAt: string
-  status: "Active" | "Inactive" | "Pending"
-}
+import { Search, Filter, MoreVertical, ArrowUpDown, Eye, Edit, Trash, Loader2, AlertCircle } from "lucide-react"
+import { useCustomers, Customer } from "@/hooks/useCustomers"
 
 export default function Customers() {
+  const { customers, loading, error, refetch } = useCustomers()
   const [searchQuery, setSearchQuery] = React.useState("")
   const [sortField, setSortField] = React.useState<keyof Customer | null>(null)
   const [sortDirection, setSortDirection] = React.useState<"asc" | "desc">("asc")
   const [currentPage, setCurrentPage] = React.useState(1)
   const [pageSize] = React.useState(10)
-
-  const customers: Customer[] = [
-    {
-      id: "CUST001",
-      name: "Olivia Martin",
-      email: "olivia.martin@email.com",
-      orders: 12,
-      totalSpent: 4567.89,
-      joinedAt: "2023-01-15",
-      status: "Active",
-    },
-    {
-      id: "CUST002", 
-      name: "Jackson Lee",
-      email: "jackson.lee@email.com",
-      orders: 8,
-      totalSpent: 2134.50,
-      joinedAt: "2023-02-22",
-      status: "Active",
-    },
-    {
-      id: "CUST003",
-      name: "Isabella Nguyen", 
-      email: "isabella.nguyen@email.com",
-      orders: 15,
-      totalSpent: 6789.12,
-      joinedAt: "2023-01-08",
-      status: "Active",
-    },
-    {
-      id: "CUST004",
-      name: "William Kim",
-      email: "william.kim@email.com", 
-      orders: 3,
-      totalSpent: 567.23,
-      joinedAt: "2023-03-10",
-      status: "Pending",
-    },
-    {
-      id: "CUST005",
-      name: "Sofia Davis",
-      email: "sofia.davis@email.com",
-      orders: 7,
-      totalSpent: 1845.67,
-      joinedAt: "2023-02-05",
-      status: "Inactive",
-    },
-  ]
 
   // Filter customers based on search query
   const filteredCustomers = React.useMemo(() => {
@@ -103,6 +47,11 @@ export default function Customers() {
     return [...filteredCustomers].sort((a, b) => {
       const aValue = a[sortField]
       const bValue = b[sortField]
+      
+      // Handle undefined values
+      if (aValue === undefined && bValue === undefined) return 0
+      if (aValue === undefined) return 1
+      if (bValue === undefined) return -1
       
       if (sortDirection === "asc") {
         return aValue > bValue ? 1 : -1
@@ -143,6 +92,60 @@ export default function Customers() {
     )
   }
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-full">
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-semibold text-zinc-900">Customers</h1>
+              <p className="text-zinc-500 mt-1">Manage your customer relationships</p>
+            </div>
+          </div>
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <div className="flex flex-col items-center gap-4">
+                <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
+                <p className="text-zinc-500">Loading customers...</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-full">
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-semibold text-zinc-900">Customers</h1>
+              <p className="text-zinc-500 mt-1">Manage your customer relationships</p>
+            </div>
+          </div>
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <div className="flex flex-col items-center gap-4">
+                <AlertCircle className="h-8 w-8 text-red-500" />
+                <div className="text-center">
+                  <p className="text-zinc-900 font-medium">Failed to load customers</p>
+                  <p className="text-zinc-500 text-sm">{error}</p>
+                  <Button onClick={refetch} variant="outline" className="mt-4">
+                    Try Again
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-full">
       <div className="space-y-6">
@@ -152,10 +155,6 @@ export default function Customers() {
             <h1 className="text-3xl font-semibold text-zinc-900">Customers</h1>
             <p className="text-zinc-500 mt-1">Manage your customer relationships</p>
           </div>
-          {/* <Button size="sm" className="w-fit">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Customer
-          </Button> */}
         </div>
 
         {/* Search and Filters */}
@@ -188,149 +187,166 @@ export default function Customers() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-zinc-50">
-                    <TableHead className="w-12"></TableHead>
-                    <TableHead 
-                      className="cursor-pointer hover:bg-zinc-100 transition-colors"
-                      onClick={() => handleSort("name")}
-                    >
-                      <div className="flex items-center gap-2">
-                        Customer
-                        <ArrowUpDown className="h-3 w-3 text-zinc-400" />
-                      </div>
-                    </TableHead>
-                    <TableHead 
-                      className="cursor-pointer hover:bg-zinc-100 transition-colors"
-                      onClick={() => handleSort("orders")}
-                    >
-                      <div className="flex items-center gap-2">
-                        Orders
-                        <ArrowUpDown className="h-3 w-3 text-zinc-400" />
-                      </div>
-                    </TableHead>
-                    <TableHead 
-                      className="cursor-pointer hover:bg-zinc-100 transition-colors"
-                      onClick={() => handleSort("totalSpent")}
-                    >
-                      <div className="flex items-center gap-2">
-                        Total Spent
-                        <ArrowUpDown className="h-3 w-3 text-zinc-400" />
-                      </div>
-                    </TableHead>
-                    <TableHead 
-                      className="cursor-pointer hover:bg-zinc-100 transition-colors"
-                      onClick={() => handleSort("joinedAt")}
-                    >
-                      <div className="flex items-center gap-2">
-                        Joined
-                        <ArrowUpDown className="h-3 w-3 text-zinc-400" />
-                      </div>
-                    </TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-12"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedCustomers.map((customer) => (
-                    <TableRow key={customer.id} className="hover:bg-zinc-50 transition-colors">
-                      <TableCell>
-                        <div className="w-8 h-8 bg-zinc-900 text-white rounded-full flex items-center justify-center text-xs font-medium">
-                          {customer.name.split(' ').map(n => n[0]).join('')}
+            {paginatedCustomers.length === 0 ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <p className="text-zinc-500">No customers found</p>
+                  {searchQuery && (
+                    <p className="text-zinc-400 text-sm mt-1">
+                      Try adjusting your search query
+                    </p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-zinc-50">
+                      <TableHead className="w-12"></TableHead>
+                      <TableHead 
+                        className="cursor-pointer hover:bg-zinc-100 transition-colors"
+                        onClick={() => handleSort("name")}
+                      >
+                        <div className="flex items-center gap-2">
+                          Customer
+                          <ArrowUpDown className="h-3 w-3 text-zinc-400" />
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium text-zinc-900">{customer.name}</p>
-                          <p className="text-sm text-zinc-500">{customer.email}</p>
-                          <p className="text-xs text-zinc-400">{customer.id}</p>
+                      </TableHead>
+                      <TableHead 
+                        className="cursor-pointer hover:bg-zinc-100 transition-colors"
+                        onClick={() => handleSort("orders")}
+                      >
+                        <div className="flex items-center gap-2">
+                          Orders
+                          <ArrowUpDown className="h-3 w-3 text-zinc-400" />
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-center">
-                          <p className="font-medium text-zinc-900">{customer.orders}</p>
-                          <p className="text-xs text-zinc-500">orders</p>
+                      </TableHead>
+                      <TableHead 
+                        className="cursor-pointer hover:bg-zinc-100 transition-colors"
+                        onClick={() => handleSort("totalSpent")}
+                      >
+                        <div className="flex items-center gap-2">
+                          Total Spent
+                          <ArrowUpDown className="h-3 w-3 text-zinc-400" />
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-center">
-                          <p className="font-medium text-zinc-900">₵{customer.totalSpent.toLocaleString()}</p>
-                          <p className="text-xs text-zinc-500">lifetime value</p>
+                      </TableHead>
+                      <TableHead 
+                        className="cursor-pointer hover:bg-zinc-100 transition-colors"
+                        onClick={() => handleSort("joinedAt")}
+                      >
+                        <div className="flex items-center gap-2">
+                          Joined
+                          <ArrowUpDown className="h-3 w-3 text-zinc-400" />
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-center">
-                          <p className="font-medium text-zinc-900">
-                            {new Date(customer.joinedAt).toLocaleDateString()}
-                          </p>
-                          <p className="text-xs text-zinc-500">member since</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {getStatusBadge(customer.status)}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <MoreVertical className="h-4 w-4" />
-                              <span className="sr-only">Open menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Eye className="mr-2 h-4 w-4" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit Customer
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive">
-                              <Trash className="mr-2 h-4 w-4" />
-                              Delete Customer
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+                      </TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="w-12"></TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedCustomers.map((customer) => (
+                      <TableRow key={customer.id} className="hover:bg-zinc-50 transition-colors">
+                        <TableCell>
+                          <div className="w-8 h-8 bg-zinc-900 text-white rounded-full flex items-center justify-center text-xs font-medium">
+                            {customer.name.split(' ').map(n => n[0]).join('')}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium text-zinc-900">{customer.name}</p>
+                            <p className="text-sm text-zinc-500">{customer.email}</p>
+                            {customer.phone && (
+                              <p className="text-xs text-zinc-400">{customer.phone}</p>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-center">
+                            <p className="font-medium text-zinc-900">{customer.orders}</p>
+                            <p className="text-xs text-zinc-500">orders</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-center">
+                            <p className="font-medium text-zinc-900">₵{customer.totalSpent.toLocaleString()}</p>
+                            <p className="text-xs text-zinc-500">lifetime value</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-center">
+                            <p className="font-medium text-zinc-900">
+                              {new Date(customer.joinedAt).toLocaleDateString()}
+                            </p>
+                            <p className="text-xs text-zinc-500">member since</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {getStatusBadge(customer.status)}
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <MoreVertical className="h-4 w-4" />
+                                <span className="sr-only">Open menu</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>
+                                <Eye className="mr-2 h-4 w-4" />
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit Customer
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-destructive">
+                                <Trash className="mr-2 h-4 w-4" />
+                                Delete Customer
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </CardContent>
         </Card>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between text-sm text-zinc-500">
-          <p>
-            Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, sortedCustomers.length)} of {sortedCustomers.length} customers
-          </p>
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-            >
-              Previous
-            </Button>
-            <span className="flex items-center gap-1">
-              <span>Page {currentPage} of {totalPages}</span>
-            </span>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-            >
-              Next
-            </Button>
+        {paginatedCustomers.length > 0 && (
+          <div className="flex items-center justify-between text-sm text-zinc-500">
+            <p>
+              Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, sortedCustomers.length)} of {sortedCustomers.length} customers
+            </p>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <span className="flex items-center gap-1">
+                <span>Page {currentPage} of {totalPages}</span>
+              </span>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
