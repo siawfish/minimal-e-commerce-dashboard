@@ -13,8 +13,8 @@ interface TransactionData {
   customerEmail?: string
   total?: number
   amount?: number
-  status: string
-  createdAt: string
+  status?: string
+  createdAt?: string
   reference?: string
 }
 
@@ -95,6 +95,8 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
                 const customerName = transaction.customerData?.fullName || transaction.customerName || 'Unknown Customer'
                 const customerEmail = transaction.customerData?.email || transaction.customerEmail || ''
                 const amount = transaction.total || transaction.amount || 0
+                const status = transaction.status || 'pending'
+                const createdAt = transaction.createdAt || new Date().toISOString()
                 
                 return (
                   <TableRow key={transaction.id}>
@@ -112,14 +114,14 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
                     <TableCell>
                       <Badge 
                         variant="outline" 
-                        className={`flex items-center gap-1 w-fit ${getStatusColor(transaction.status)}`}
+                        className={`flex items-center gap-1 w-fit ${getStatusColor(status)}`}
                       >
-                        {getStatusIcon(transaction.status)}
-                        {transaction.status === 'success' ? 'completed' : transaction.status}
+                        {getStatusIcon(status)}
+                        {status === 'success' ? 'completed' : status}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {formatDate(transaction.createdAt)}
+                      {formatDate(createdAt)}
                     </TableCell>
                     <TableCell className="text-muted-foreground font-mono text-sm">
                       {transaction.reference || 'N/A'}

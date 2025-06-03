@@ -1,18 +1,19 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { collection, getDocs, query, where, orderBy, limit, DocumentData } from "firebase/firestore"
+import { collection, getDocs, query, where, orderBy, limit } from "firebase/firestore"
 import { db } from "@/lib/firebase"
-import { OverviewCards } from "@/components/overview-cards"
-import { RevenueChart } from "@/components/revenue-chart"
-import { RecentTransactions } from "@/components/recent-transactions"
-import { ProductStats } from "@/components/product-stats"
+import { OverviewCards } from "./overview-cards"
+import { RevenueChart } from "./revenue-chart"
+import { RecentTransactions } from "./recent-transactions"
+import { ProductStats } from "./product-stats"
 
-interface TransactionData extends DocumentData {
-  status: string
+interface TransactionData {
+  id: string
+  status?: string
   total?: number
   amount?: number
-  createdAt: string
+  createdAt?: string
   cartItems?: CartItem[]
   products?: CartItem[]
   customerData?: {
@@ -44,8 +45,13 @@ interface TopProduct {
   revenue: number
 }
 
-interface CustomerDoc extends DocumentData {
-  createdAt: string
+interface CustomerDoc {
+  createdAt?: string
+  fullName?: string
+  email?: string
+  phone?: string
+  location?: string
+  updatedAt?: string
 }
 
 interface OverviewData {
@@ -89,10 +95,22 @@ export function OverviewDashboard() {
         ])
 
         // Process transactions for revenue calculation
-        const allTransactions: TransactionData[] = transactionsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as TransactionData))
+        const allTransactions: TransactionData[] = transactionsSnapshot.docs.map(doc => {
+          const data = doc.data()
+          return {
+            id: doc.id,
+            status: data.status || '',
+            total: data.total || 0,
+            amount: data.amount || 0,
+            createdAt: data.createdAt || new Date().toISOString(),
+            cartItems: data.cartItems || [],
+            products: data.products || [],
+            customerData: data.customerData,
+            customerName: data.customerName,
+            customerEmail: data.customerEmail,
+            reference: data.reference
+          }
+        })
 
         const completedTransactions = allTransactions.filter(t => 
           t.status === 'completed' || t.status === 'success'
@@ -109,17 +127,29 @@ export function OverviewDashboard() {
         // Calculate growth metrics
         const { revenueGrowth, customerGrowth } = calculateGrowthMetrics(
           completedTransactions,
-          customersSnapshot.docs
+          customersSnapshot.docs.map(doc => doc.data() as CustomerDoc)
         )
 
         // Get top-selling products
         const topProducts = calculateTopProducts(completedTransactions)
 
         // Recent transactions for display
-        const recentTransactions: TransactionData[] = recentTransactionsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as TransactionData))
+        const recentTransactions: TransactionData[] = recentTransactionsSnapshot.docs.map(doc => {
+          const data = doc.data()
+          return {
+            id: doc.id,
+            status: data.status || '',
+            total: data.total || 0,
+            amount: data.amount || 0,
+            createdAt: data.createdAt || new Date().toISOString(),
+            cartItems: data.cartItems || [],
+            products: data.products || [],
+            customerData: data.customerData,
+            customerName: data.customerName,
+            customerEmail: data.customerEmail,
+            reference: data.reference
+          }
+        })
 
         setData({
           totalRevenue,
@@ -178,9 +208,11 @@ function calculateMonthlyRevenue(transactions: TransactionData[]): MonthlyRevenu
   const monthlyData: { [key: string]: number } = {}
   
   transactions.forEach(transaction => {
-    const date = new Date(transaction.createdAt)
-    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-    monthlyData[monthKey] = (monthlyData[monthKey] || 0) + (transaction.total || transaction.amount || 0)
+    if (transaction.createdAt) {
+      const date = new Date(transaction.createdAt)
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      monthlyData[monthKey] = (monthlyData[monthKey] || 0) + (transaction.total || transaction.amount || 0)
+    }
   })
 
   // Get last 6 months
@@ -200,7 +232,7 @@ function calculateMonthlyRevenue(transactions: TransactionData[]): MonthlyRevenu
   return months
 }
 
-function calculateGrowthMetrics(transactions: TransactionData[], customers: DocumentData[]) {
+function calculateGrowthMetrics(transactions: TransactionData[], customers: CustomerDoc[]) {
   const now = new Date()
   const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
   const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1)
@@ -208,6 +240,7 @@ function calculateGrowthMetrics(transactions: TransactionData[], customers: Docu
   // Revenue growth
   const lastMonthRevenue = transactions
     .filter(t => {
+      if (!t.createdAt) return false
       const date = new Date(t.createdAt)
       return date >= lastMonth && date < now
     })
@@ -215,6 +248,7 @@ function calculateGrowthMetrics(transactions: TransactionData[], customers: Docu
 
   const previousMonthRevenue = transactions
     .filter(t => {
+      if (!t.createdAt) return false
       const date = new Date(t.createdAt)
       return date >= twoMonthsAgo && date < lastMonth
     })
@@ -225,15 +259,15 @@ function calculateGrowthMetrics(transactions: TransactionData[], customers: Docu
     : 0
 
   // Customer growth (simplified - based on when customers were created)
-  const lastMonthCustomers = customers.filter(doc => {
-    const data = doc.data() as CustomerDoc
-    const date = new Date(data.createdAt)
+  const lastMonthCustomers = customers.filter(customer => {
+    if (!customer.createdAt) return false
+    const date = new Date(customer.createdAt)
     return date >= lastMonth && date < now
   }).length
 
-  const previousMonthCustomers = customers.filter(doc => {
-    const data = doc.data() as CustomerDoc
-    const date = new Date(data.createdAt)
+  const previousMonthCustomers = customers.filter(customer => {
+    if (!customer.createdAt) return false
+    const date = new Date(customer.createdAt)
     return date >= twoMonthsAgo && date < lastMonth
   }).length
 
@@ -250,8 +284,8 @@ function calculateTopProducts(transactions: TransactionData[]): TopProduct[] {
   transactions.forEach(transaction => {
     const products = transaction.cartItems || transaction.products || []
     products.forEach((item: CartItem) => {
-      const productId = item.productId || item.productId
-      const productName = item.productName || item.productName || 'Unknown Product'
+      const productId = item.productId
+      const productName = item.productName || 'Unknown Product'
       const quantity = item.quantity || 1
       const price = item.price || 0
 

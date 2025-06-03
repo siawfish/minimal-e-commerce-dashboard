@@ -1,6 +1,6 @@
-import { Suspense } from "react"
 import { OverviewDashboard } from "@/components/overview-dashboard"
 import { OverviewSkeleton } from "@/components/overview-skeleton"
+import { Suspense } from "react"
 
 export default function Page() {
   return (
